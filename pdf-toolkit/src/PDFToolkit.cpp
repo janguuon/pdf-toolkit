@@ -3,7 +3,7 @@
 #include <sstream>
 #include <windows.h>
 
-// ?�역 context�??�용?�여 ?�명주기 문제 ?�결
+// 전역 context를 사용하여 생명주기 문제 해결
 static fz_context* g_ctx = nullptr;
 static int g_ref_count = 0;
 
@@ -56,12 +56,12 @@ PDFToolkit& PDFToolkit::operator=(PDFToolkit&& other) noexcept {
 
 bool PDFToolkit::mergePDFs(const std::vector<std::string>& inputFiles, const std::string& outputFile) {
     if (!ctx) {
-        std::cout << "MuPDF context가 초기?�되지 ?�았?�니??" << std::endl;
+        std::cout << "MuPDF context가 초기화되지 않았습니다." << std::endl;
         return false;
     }
     
     if (inputFiles.size() < 2) {
-        std::cout << "병합?�려�?최소 2개의 PDF ?�일???�요?�니??" << std::endl;
+        std::cout << "병합하려면 최소 2개의 PDF 파일이 필요합니다." << std::endl;
         return false;
     }
 
@@ -69,27 +69,27 @@ bool PDFToolkit::mergePDFs(const std::vector<std::string>& inputFiles, const std
     
     output_doc = pdf_create_document(ctx);
     if (!output_doc) {
-        std::cout << "출력 문서 ?�성 ?�패" << std::endl;
+        std::cout << "출력 문서 생성 실패" << std::endl;
         return false;
     }
 
     for (const auto& inputFile : inputFiles) {
         fz_document* input_doc = fz_open_document(ctx, inputFile.c_str());
         if (!input_doc) {
-            std::cout << "?�일 ?�기 ?�패: " << inputFile.c_str() << std::endl;
+            std::cout << "파일 열기 실패: " << inputFile.c_str() << std::endl;
             continue;
         }
 
         pdf_document* input_pdf = pdf_specifics(ctx, input_doc);
         if (!input_pdf) {
-            std::cout << "?�일???�효??PDF가 ?�닙?�다: " << inputFile.c_str() << std::endl;
+            std::cout << "파일이 유효한 PDF가 아닙니다: " << inputFile.c_str() << std::endl;
             fz_drop_document(ctx, input_doc);
             continue;
         }
 
         pdf_graft_map* map = pdf_new_graft_map(ctx, output_doc);
         if (!map) {
-            std::cout << "Graft map ?�성 ?�패" << std::endl;
+            std::cout << "Graft map 생성 실패" << std::endl;
             fz_drop_document(ctx, input_doc);
             continue;
         }
@@ -106,26 +106,26 @@ bool PDFToolkit::mergePDFs(const std::vector<std::string>& inputFiles, const std
     pdf_save_document(ctx, output_doc, outputFile.c_str(), NULL);
     pdf_drop_document(ctx, output_doc);
 
-    std::cout << "PDF 병합 ?�료: " << outputFile.c_str() << std::endl;
+    std::cout << "PDF 병합 완료: " << outputFile.c_str() << std::endl;
     return true;
 }
 
 bool PDFToolkit::deletePages(const std::string& inputFile, const std::string& outputFile,
     int startPage, int endPage) {
     if (!ctx) {
-        std::cout << "MuPDF context가 초기?�되지 ?�았?�니??" << std::endl;
+        std::cout << "MuPDF context가 초기화되지 않았습니다." << std::endl;
         return false;
     }
     
     fz_document* doc = fz_open_document(ctx, inputFile.c_str());
     if (!doc) {
-        std::cout << "?�일 ?�기 ?�패: " << inputFile.c_str() << std::endl;
+        std::cout << "파일 열기 실패: " << inputFile.c_str() << std::endl;
         return false;
     }
 
     pdf_document* pdf = pdf_specifics(ctx, doc);
     if (!pdf) {
-        std::cout << "?�일???�효??PDF가 ?�닙?�다: " << inputFile.c_str() << std::endl;
+        std::cout << "파일이 유효한 PDF가 아닙니다: " << inputFile.c_str() << std::endl;
         fz_drop_document(ctx, doc);
         return false;
     }
@@ -137,21 +137,21 @@ bool PDFToolkit::deletePages(const std::string& inputFile, const std::string& ou
     else endPage = endPage;
 
     if (startPage < 0 || endPage > total_pages || startPage >= endPage) {
-        std::cout << "?�못???�이지 범위?�니??" << std::endl;
+        std::cout << "잘못된 페이지 범위입니다." << std::endl;
         fz_drop_document(ctx, doc);
         return false;
     }
 
     pdf_document* output_doc = pdf_create_document(ctx);
     if (!output_doc) {
-        std::cout << "출력 문서 ?�성 ?�패" << std::endl;
+        std::cout << "출력 문서 생성 실패" << std::endl;
         fz_drop_document(ctx, doc);
         return false;
     }
 
     pdf_graft_map* map = pdf_new_graft_map(ctx, output_doc);
     if (!map) {
-        std::cout << "Graft map ?�성 ?�패" << std::endl;
+        std::cout << "Graft map 생성 실패" << std::endl;
         pdf_drop_document(ctx, output_doc);
         fz_drop_document(ctx, doc);
         return false;
@@ -170,25 +170,25 @@ bool PDFToolkit::deletePages(const std::string& inputFile, const std::string& ou
     pdf_drop_document(ctx, output_doc);
     fz_drop_document(ctx, doc);
 
-    std::cout << "?�이지 ??�� ?�료: " << outputFile.c_str() << std::endl;
+    std::cout << "페이지 삭제 완료: " << outputFile.c_str() << std::endl;
     return true;
 }
 
 bool PDFToolkit::splitPDF(const std::string& inputFile, const std::string& outputPrefix) {
     if (!ctx) {
-        std::cout << "MuPDF context가 초기?�되지 ?�았?�니??" << std::endl;
+        std::cout << "MuPDF context가 초기화되지 않았습니다." << std::endl;
         return false;
     }
     
     fz_document* doc = fz_open_document(ctx, inputFile.c_str());
     if (!doc) {
-        std::cout << "?�일 ?�기 ?�패: " << inputFile.c_str() << std::endl;
+        std::cout << "파일 열기 실패: " << inputFile.c_str() << std::endl;
         return false;
     }
 
     pdf_document* pdf = pdf_specifics(ctx, doc);
     if (!pdf) {
-        std::cout << "?�일???�효??PDF가 ?�닙?�다: " << inputFile.c_str() << std::endl;
+        std::cout << "파일이 유효한 PDF가 아닙니다: " << inputFile.c_str() << std::endl;
         fz_drop_document(ctx, doc);
         return false;
     }
@@ -198,13 +198,13 @@ bool PDFToolkit::splitPDF(const std::string& inputFile, const std::string& outpu
     for (int i = 0; i < total_pages; i++) {
         pdf_document* output_doc = pdf_create_document(ctx);
         if (!output_doc) {
-            std::cout << "출력 문서 ?�성 ?�패" << std::endl;
+            std::cout << "출력 문서 생성 실패" << std::endl;
             continue;
         }
 
         pdf_graft_map* map = pdf_new_graft_map(ctx, output_doc);
         if (!map) {
-            std::cout << "Graft map ?�성 ?�패" << std::endl;
+            std::cout << "Graft map 생성 실패" << std::endl;
             pdf_drop_document(ctx, output_doc);
             continue;
         }
@@ -219,11 +219,11 @@ bool PDFToolkit::splitPDF(const std::string& inputFile, const std::string& outpu
         pdf_save_document(ctx, output_doc, output_filename.c_str(), NULL);
         pdf_drop_document(ctx, output_doc);
 
-        std::cout << "?�이지 " << (i + 1) << " ?�?? " << output_filename.c_str() << std::endl;
+        std::cout << "페이지 " << (i + 1) << " 저장: " << output_filename.c_str() << std::endl;
     }
 
     fz_drop_document(ctx, doc);
-    std::cout << "PDF 분할 ?�료. �?" << total_pages << "�??�일 ?�성" << std::endl;
+    std::cout << "PDF 분할 완료. 총 " << total_pages << "개 파일 생성" << std::endl;
     return true;
 }
 
